@@ -143,7 +143,7 @@ function createOrgs() {
     fi
     infoln "Generating certificates using cryptogen tool"
 
-    infoln "Creating Org1 Identities"
+    infoln "Creating Busi Identities"
 
     set -x
     cryptogen generate --config=./organizations/cryptogen/crypto-config-busifly.yaml --output="organizations"
@@ -153,10 +153,20 @@ function createOrgs() {
       fatalln "Failed to generate certificates..."
     fi
 
-    infoln "Creating Org2 Identities"
+    infoln "Creating Econ Identities"
 
     set -x
-    cryptogen generate --config=./organizations/cryptogen/crypto-config-org2.yaml --output="organizations"
+    cryptogen generate --config=./organizations/cryptogen/crypto-config-econfly.yaml --output="organizations"
+    res=$?
+    { set +x; } 2>/dev/null
+    if [ $res -ne 0 ]; then
+      fatalln "Failed to generate certificates..."
+    fi
+
+    infoln "Creating Office Identities"
+
+    set -x
+    cryptogen generate --config=./organizations/cryptogen/crypto-config-office.yaml --output="organizations"
     res=$?
     { set +x; } 2>/dev/null
     if [ $res -ne 0 ]; then
@@ -192,7 +202,7 @@ function createOrgs() {
       fi
     done
 
-    infoln "Creating Org1 Identities"
+    infoln "Creating Busi Identities"
 
     createOrg1
 

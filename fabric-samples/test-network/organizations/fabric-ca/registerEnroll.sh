@@ -1,5 +1,83 @@
 #!/bin/bash
 
+function createOffice(){
+  infoln "Enrolling the CA admin"
+  mkdir -p organizations/peerOrganizations/office.example.com/
+
+  export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrganizations/office.example.com/
+
+  set -x
+  fabric-ca-client enroll -u https://admin:adminpw@localhost:7054 --caname ca-office --tls.certfiles ${PWD}/organizations/fabric-ca/office/tls-cert.pem
+  { set +x; } 2>/dev/null
+
+  echo 'NodeOUs:
+  Enable: true
+  ClientOUIdentifier:
+    Certificate: cacerts/localhost-7054-ca-office.pem
+    OrganizationalUnitIdentifier: client
+  PeerOUIdentifier:
+    Certificate: cacerts/localhost-7054-ca-office.pem
+    OrganizationalUnitIdentifier: peer
+  AdminOUIdentifier:
+    Certificate: cacerts/localhost-7054-ca-office.pem
+    OrganizationalUnitIdentifier: admin
+  OrdererOUIdentifier:
+    Certificate: cacerts/localhost-7054-ca-office.pem
+    OrganizationalUnitIdentifier: orderer' >${PWD}/organizations/peerOrganizations/office.example.com/msp/config.yaml
+
+  infoln "Registering peer0"
+  set -x
+  fabric-ca-client register --caname ca-office --id.name peer0 --id.secret peer0pw --id.type peer --tls.certfiles ${PWD}/organizations/fabric-ca/office/tls-cert.pem
+  { set +x; } 2>/dev/null
+
+  infoln "Registering user"
+  set -x
+  fabric-ca-client register --caname ca-office --id.name user1 --id.secret user1pw --id.type client --tls.certfiles ${PWD}/organizations/fabric-ca/office/tls-cert.pem
+  { set +x; } 2>/dev/null
+
+  infoln "Registering the org admin"
+  set -x
+  fabric-ca-client register --caname ca-office --id.name officeadmin --id.secret officeadminpw --id.type admin --tls.certfiles ${PWD}/organizations/fabric-ca/office/tls-cert.pem
+  { set +x; } 2>/dev/null
+
+  infoln "Generating the peer0 msp"
+  set -x
+  fabric-ca-client enroll -u https://peer0:peer0pw@localhost:7054 --caname ca-office -M ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/msp --csr.hosts peer0.office.example.com --tls.certfiles ${PWD}/organizations/fabric-ca/office/tls-cert.pem
+  { set +x; } 2>/dev/null
+
+  cp ${PWD}/organizations/peerOrganizations/office.example.com/msp/config.yaml ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/msp/config.yaml
+
+  infoln "Generating the peer0-tls certificates"
+  set -x
+  fabric-ca-client enroll -u https://peer0:peer0pw@localhost:7054 --caname ca-office -M ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls \
+  --enrollment.profile tls --csr.hosts peer0.office.example.com --csr.hosts localhost --csr.hosts
+  { set +x; } 2>/dev/null
+
+  cp ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls/tlscacerts/* ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls/ca.crt
+  cp ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls/signcerts/* ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls/server.crt
+  cp ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls/keystore/* ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls/server.key
+
+  mkdir -p ${PWD}/organizations/peerOrganizations/office.example.com/msp/tlscacerts
+  cp ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls/tlscacerts/* ${PWD}/organizations/peerOrganizations/office.example.com/msp/tlscacerts/ca.crt
+  
+  mkdir -p ${PWD}/organizations/peerOrganizations/office.example.com/tlsca
+  cp ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/tls/tlscacerts/* ${PWD}/organizations/peerOrganizations/office.example.com/tlsca/tlsca.office.example.com-cert.pem
+
+  mkdir -p ${PWD}/organizations/peerOrganizations/office.example.com/ca
+  cp ${PWD}/organizations/peerOrganizations/office.example.com/peers/peer0.office.example.com/msp/cacerts/* ${PWD}/organizations/peerOrganizations/office.example.com/ca/ca.office.example.com-cert.pem
+
+  mkdir -p organizations/peerOrganizations/office.example.com/users
+}
+
+function createEconFly(){
+
+}
+
+function createBusiFly(){
+
+}
+
+
 function createOrg1() {
   infoln "Enrolling the CA admin"
   mkdir -p organizations/peerOrganizations/org1.example.com/
