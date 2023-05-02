@@ -499,6 +499,9 @@ elif [ "$MODE" == "createChannel" ]; then
   infoln "If network is not up, starting nodes with CLI timeout of '${MAX_RETRY}' tries and CLI delay of '${CLI_DELAY}' seconds and using database '${DATABASE} ${CRYPTO_MODE}"
 elif [ "$MODE" == "down" ]; then
   infoln "Stopping network"
+elif [ "$MODE" == "createSecond" ]; then
+  infoln "Creating second channel."
+  infoln "If network is not up, starting nodes with CLI timeout of '${MAX_RETRY}' tries and CLI delay of '${CLI_DELAY}' seconds and using database '${DATABASE} ${CRYPTO_MODE}"
 elif [ "$MODE" == "restart" ]; then
   infoln "Restarting network"
 elif [ "$MODE" == "deployCC" ]; then
@@ -510,151 +513,68 @@ fi
 
 if [ "${MODE}" == "up" ]; then
   networkUp
-  # Create the Office-EconFly (Org1-Org2) channel creation transaction
-  configtxgen -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel1.tx -channelID channel1
+elif [ "${MODE}" == "createChannel" ]; then
+  createChannel
+elif [ "${MODE}" == "createSecond" ]; then
+
+  # Exporting the channel name to the environment variable
+  export CORE_PEER_TLS_ENABLED=true
+  export CORE_PEER_LOCALMSPID="Org1MSP"
+  export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+  export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+  export CORE_PEER_ADDRESS=localhost:7051
+  
+
   # Create the Office (Org1) channel creation transaction, Org3 will be added to this channel later
   configtxgen -profile SecondChannel -outputCreateChannelTx ./channel-artifacts/channel2.tx -channelID channel2
 
   export FABRIC_CFG_PATH=$PWD/../config/
-
-  # Exporting the channel name to the environment variable
-  export CORE_PEER_TLS_ENABLED=true
-  export CORE_PEER_LOCALMSPID="Org1MSP"
-  export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
-  export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-  export CORE_PEER_ADDRESS=localhost:7051
-
-  ## Creating channels: channel1 and channel2
   
-  # Create channel1
-  peer channel create -o localhost:7050  --ordererTLSHostnameOverride orderer.example.com -c channel1 -f ./channel-artifacts/channel1.tx --outputBlock ./channel-artifacts/channel1.block --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
   # Create channel2
-  peer channel create -o localhost:7050  --ordererTLSHostnameOverride orderer.example.com -c channel2 -f ./channel-artifacts/channel2.tx --outputBlock ./channel-artifacts/channel2.block --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
-
-  # Join peers to the channel1
-  peer channel join -b ./channel-artifacts/channel1.block
+  peer channel create -o localhost:7050 -c channel2 --ordererTLSHostnameOverride orderer.example.com -f ./channel-artifacts/channel2.tx --outputBlock ./channel-artifacts/channel2.block --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
   
   # Join peers to the channel2
   peer channel join -b ./channel-artifacts/channel2.block
 
-  # Exporting the channel name to the environment variable
-  export CORE_PEER_TLS_ENABLED=true
-  export CORE_PEER_LOCALMSPID="Org2MSP"
-  export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
-  export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
-  export CORE_PEER_ADDRESS=localhost:9051
-  
-  # Join second org peers to the channel1
-  peer channel fetch 0 ./channel-artifacts/channel_org2.block -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c channel1 --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
+  docker exec cli ./scripts/setAnchorPeer.sh 1 channel2
+  docker exec cli ./scripts/setAnchorPeer.sh 3 channel2
 
-  # Join second org peers to the channel1
-  peer channel join -b ./channel-artifacts/channel_org2.block
+  ## Set the anchor peers for each org in the channel2
 
-  ## Set the anchor peers for each org in the channel1 and channel2
+  # # Fetch the channel config for the channel2
+  # peer channel fetch config channel-artifacts/config_block2.pb -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c channel2 --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
 
-  # Exporting the channel name to the environment variable
-  export FABRIC_CFG_PATH=$PWD/../config/
-  export CORE_PEER_TLS_ENABLED=true
-  export CORE_PEER_LOCALMSPID="Org1MSP"
-  export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
-  export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-  export CORE_PEER_ADDRESS=localhost:7051
+  # cd channel-artifacts/
 
-  # Fetch the channel config for the channel1
-  peer channel fetch config channel-artifacts/config_block.pb -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c channel1 --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
+  # # Decode the config block to JSON and isolate the config to config.json
+  # configtxlator proto_decode --input config_block2.pb --type common.Block --output config_block2.json
+  # jq '.data.data[0].payload.data.config' config_block2.json > config2.json
 
-  # Fetch the channel config for the channel2
-  peer channel fetch config channel-artifacts/config_block2.pb -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c channel2 --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
+  # # Copy the config2.json to config2_copy.json
+  # cp config2.json config2_copy.json
 
-  cd channel-artifacts/
+  # # Add the Org1 anchor peer to the channel2 configuration
+  # jq '.channel_group.groups.Application.groups.Org1MSP.values += {"AnchorPeers":{"mod_policy": "Admins","value":{"anchor_peers": [{"host": "peer0.org1.example.com","port": 7051}]},"version": "0"}}' config2_copy.json > modified_config2.json
 
-  # Decode the config block to JSON and isolate the config to config.json
-  configtxlator proto_decode --input config_block.pb --type common.Block --output config_block.json
-  jq '.data.data[0].payload.data.config' config_block.json > config.json
+  # # Convert both the original and modified channel configurations back into protobuf format and calculate the difference between them.
 
-  # Decode the config block to JSON and isolate the config to config.json
-  configtxlator proto_decode --input config_block2.pb --type common.Block --output config_block2.json
-  jq '.data.data[0].payload.data.config' config_block2.json > config2.json
+  # # config for channel2
+  # configtxlator proto_encode --input config2.json --type common.Config --output config2.pb
+  # configtxlator proto_encode --input modified_config2.json --type common.Config --output modified_config2.pb
+  # configtxlator compute_update --channel_id channel2 --original config2.pb --updated modified_config2.pb --output config_update2.pb
 
-  # Copy the config.json to config_copy.json
-  cp config.json config_copy.json
-  # Copy the config2.json to config2_copy.json
-  cp config2.json config2_copy.json
+  # # Convert the config_update2.pb into JSON format for inspection
+  # configtxlator proto_decode --input config_update2.pb --type common.ConfigUpdate --output config_update2.json
 
-  # Add the Org1 anchor peer to the channel1 configuration
-  jq '.channel_group.groups.Application.groups.Org1MSP.values += {"AnchorPeers":{"mod_policy": "Admins","value":{"anchor_peers": [{"host": "peer0.org1.example.com","port": 7051}]},"version": "0"}}' config_copy.json > modified_config.json
+  # # Wrap the config_update2.json in an envelope message and encode it
+  # echo '{"payload":{"header":{"channel_header":{"channel_id":"channel2", "type":2}},"data":{"config_update":'$(cat config_update2.json)'}}}' | jq . > config_update2_in_envelope.json
+  # configtxlator proto_encode --input config_update2_in_envelope.json --type common.Envelope --output config_update2_in_envelope.pb
 
-  # Add the Org1 anchor peer to the channel2 configuration
-  jq '.channel_group.groups.Application.groups.Org1MSP.values += {"AnchorPeers":{"mod_policy": "Admins","value":{"anchor_peers": [{"host": "peer0.org1.example.com","port": 7051}]},"version": "0"}}' config2_copy.json > modified_config2.json
+  # cd ..
 
-  # Convert both the original and modified channel configurations back into protobuf format and calculate the difference between them.
-  
-  # config for channel1
-  configtxlator proto_encode --input config.json --type common.Config --output config.pb
-  configtxlator proto_encode --input modified_config.json --type common.Config --output modified_config.pb
-  configtxlator compute_update --channel_id channel1 --original config.pb --updated modified_config.pb --output config_update.pb
+  # # Add anchor peers to the channel2
+  # peer channel update -f ./channel-artifacts/config_update2_in_envelope.pb -c channel2 -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
 
-  # config for channel2
-  configtxlator proto_encode --input config2.json --type common.Config --output config2.pb
-  configtxlator proto_encode --input modified_config2.json --type common.Config --output modified_config2.pb
-  configtxlator compute_update --channel_id channel2 --original config2.pb --updated modified_config2.pb --output config_update2.pb
-
-  # Convert the config_update.pb into JSON format for inspection
-  configtxlator proto_decode --input config_update.pb --type common.ConfigUpdate --output config_update.json
-
-  # Convert the config_update2.pb into JSON format for inspection
-  configtxlator proto_decode --input config_update2.pb --type common.ConfigUpdate --output config_update2.json
-
-  # Wrap the config_update.json in an envelope message and encode it
-  echo '{"payload":{"header":{"channel_header":{"channel_id":"channel1", "type":2}},"data":{"config_update":'$(cat config_update.json)'}}}' | jq . > config_update_in_envelope.json
-  configtxlator proto_encode --input config_update_in_envelope.json --type common.Envelope --output config_update_in_envelope.pb
-
-  # Wrap the config_update2.json in an envelope message and encode it
-  echo '{"payload":{"header":{"channel_header":{"channel_id":"channel2", "type":2}},"data":{"config_update":'$(cat config_update2.json)'}}}' | jq . > config_update2_in_envelope.json
-  configtxlator proto_encode --input config_update2_in_envelope.json --type common.Envelope --output config_update2_in_envelope.pb
-
-  cd ..
-
-  # Add anchor peers to the channel1
-  peer channel update -f ./channel-artifacts/config_update_in_envelope.pb -c channel1 -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
-
-  # Add anchor peers to the channel2
-  peer channel update -f ./channel-artifacts/config_update2_in_envelope.pb -c channel2 -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
-
-  ## Set the anchor peers for Org2
-
-  export CORE_PEER_TLS_ENABLED=true
-  export CORE_PEER_LOCALMSPID="Org2MSP"
-  export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
-  export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
-  export CORE_PEER_ADDRESS=localhost:9051
-
-  # Fetch the channel config for the channel1
-  peer channel fetch config channel-artifacts/config_block.pb -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c channel1 --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
-
-  cd channel-artifacts/
-
-  configtxlator proto_decode --input config_block.pb --type common.Block --output config_block.json
-  jq '.data.data[0].payload.data.config' config_block.json > config.json
-  cp config.json config_copy.json
-
-  jq '.channel_group.groups.Application.groups.Org2MSP.values += {"AnchorPeers":{"mod_policy": "Admins","value":{"anchor_peers": [{"host": "peer0.org2.example.com","port": 9051}]},"version": "0"}}' config_copy.json > modified_config.json
-
-  configtxlator proto_encode --input config.json --type common.Config --output config.pb
-  configtxlator proto_encode --input modified_config.json --type common.Config --output modified_config.pb
-  configtxlator compute_update --channel_id channel1 --original config.pb --updated modified_config.pb --output config_update.pb
-
-  configtxlator proto_decode --input config_update.pb --type common.ConfigUpdate --output config_update.json
-  echo '{"payload":{"header":{"channel_header":{"channel_id":"channel1", "type":2}},"data":{"config_update":'$(cat config_update.json)'}}}' | jq . > config_update_in_envelope.json
-  configtxlator proto_encode --input config_update_in_envelope.json --type common.Envelope --output config_update_in_envelope.pb
-
-  cd ..
-
-  # Update the channel and set the Org2 anchor peer
-  peer channel update -f channel-artifacts/config_update_in_envelope.pb -c channel1 -o localhost:7050  --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
-
-elif [ "${MODE}" == "createChannel" ]; then
-  createChannel
 elif [ "${MODE}" == "deployCC" ]; then
   deployCC
 elif [ "${MODE}" == "down" ]; then
