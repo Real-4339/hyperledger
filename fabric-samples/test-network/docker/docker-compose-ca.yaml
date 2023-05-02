@@ -11,11 +11,11 @@ networks:
 
 services:
 
-  ca_busifly:
+  ca_org1:
     image: hyperledger/fabric-ca:latest
     environment:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
-      - FABRIC_CA_SERVER_CA_NAME=ca-busifly
+      - FABRIC_CA_SERVER_CA_NAME=ca-org1
       - FABRIC_CA_SERVER_TLS_ENABLED=true
       - FABRIC_CA_SERVER_PORT=7054
       - FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS=0.0.0.0:17054
@@ -24,16 +24,16 @@ services:
       - "17054:17054"
     command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
     volumes:
-      - ../organizations/fabric-ca/busifly:/etc/hyperledger/fabric-ca-server
-    container_name: ca_busifly
+      - ../organizations/fabric-ca/org1:/etc/hyperledger/fabric-ca-server
+    container_name: ca_org1
     networks:
       - test
 
-  ca_econfly:
+  ca_org2:
     image: hyperledger/fabric-ca:latest
     environment:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
-      - FABRIC_CA_SERVER_CA_NAME=ca-econfly
+      - FABRIC_CA_SERVER_CA_NAME=ca-org2
       - FABRIC_CA_SERVER_TLS_ENABLED=true
       - FABRIC_CA_SERVER_PORT=8054
       - FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS=0.0.0.0:18054
@@ -42,26 +42,8 @@ services:
       - "18054:18054"
     command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
     volumes:
-      - ../organizations/fabric-ca/econfly:/etc/hyperledger/fabric-ca-server
-    container_name: ca_econfly
-    networks:
-      - test
-
-  ca_office:
-    image: hyperledger/fabric-ca:latest
-    environment:
-      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
-      - FABRIC_CA_SERVER_CA_NAME=ca-office
-      - FABRIC_CA_SERVER_TLS_ENABLED=true
-      - FABRIC_CA_SERVER_PORT=8074
-      - FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS=0.0.0.0:18074
-    ports:
-      - "8074:8074"
-      - "18074:18074"
-    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
-    volumes:
-      - ../organizations/fabric-ca/office:/etc/hyperledger/fabric-ca-server
-    container_name: ca_office
+      - ../organizations/fabric-ca/org2:/etc/hyperledger/fabric-ca-server
+    container_name: ca_org2
     networks:
       - test
 

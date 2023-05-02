@@ -44,15 +44,15 @@ Organizations:
         OrdererEndpoints:
             - orderer.example.com:7050
 
-    - &EconFly
+    - &Org1
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: EconFlyMSP
+        Name: Org1MSP
 
         # ID to load the MSP definition as
-        ID: EconFlyMSP
+        ID: Org1MSP
 
-        MSPDir: ../organizations/peerOrganizations/econfly.example.com/msp
+        MSPDir: ../organizations/peerOrganizations/org1.example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -60,16 +60,16 @@ Organizations:
         Policies:
             Readers:
                 Type: Signature
-                Rule: "OR('EconFlyMSP.admin', 'EconFlyMSP.peer', 'EconFlyMSP.client')"
+                Rule: "OR('Org1MSP.admin', 'Org1MSP.peer', 'Org1MSP.client')"
             Writers:
                 Type: Signature
-                Rule: "OR('EconFlyMSP.admin', 'EconFlyMSP.client')"
+                Rule: "OR('Org1MSP.admin', 'Org1MSP.client')"
             Admins:
                 Type: Signature
-                Rule: "OR('EconFlyMSP.admin')"
+                Rule: "OR('Org1MSP.admin')"
             Endorsement:
                 Type: Signature
-                Rule: "OR('EconFlyMSP.peer')"
+                Rule: "OR('Org1MSP.peer')"
 
     - &Org2
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -314,6 +314,7 @@ Profiles:
                 Organizations:
                     - *Org1
                     - *Org2
+
     TwoOrgsChannel:
         Consortium: SampleConsortium
         <<: *ChannelDefaults
@@ -324,3 +325,14 @@ Profiles:
                 - *Org2
             Capabilities:
                 <<: *ApplicationCapabilities
+
+    SecondChannel:
+        Consortium: SampleConsortium
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+            Capabilities:
+                <<: *ApplicationCapabilities
+
