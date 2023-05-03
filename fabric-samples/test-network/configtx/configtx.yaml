@@ -341,6 +341,10 @@ Profiles:
                 Organizations:
                     - *Org1
                     - *Org2
+            # SecondConsortium:
+            #     Organizations:
+            #         - *Org1
+            #         - *Org3
 
     TwoOrgsChannel:
         Consortium: SampleConsortium
@@ -353,27 +357,13 @@ Profiles:
             Capabilities:
                 <<: *ApplicationCapabilities
 
-    SecondOrdererGenesis:
-        <<: *ChannelDefaults
-        Orderer:
-            <<: *OrdererDefaults
-            Organizations:
-                - *OrdererOrg
-            Capabilities:
-                <<: *OrdererCapabilities
-        Consortiums:
-            SecondConsortium:
-                Organizations:
-                    - *Org1
-                    - *Org3
-
-    SecondChannel:
-        Consortium: SecondConsortium
-        <<: *ChannelDefaults
-        Application:
-            <<: *ApplicationDefaults
-            Organizations:
-                - *Org1
-                - *Org3
-            Capabilities:
-                <<: *ApplicationCapabilities
+    # SecondChannel:
+    #     Consortium: SecondConsortium
+    #     <<: *ChannelDefaults
+    #     Application:
+    #         <<: *ApplicationDefaults
+    #         Organizations:
+    #             - *Org1
+    #             - *Org3
+    #         Capabilities:
+    #             <<: *ApplicationCapabilities
