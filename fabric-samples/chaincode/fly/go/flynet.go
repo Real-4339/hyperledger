@@ -61,7 +61,7 @@ type Reservation struct {
 // Generates flightNr
 func generateFlightNr(Org string) string {
 	if Org == "Org1MSP" {
-		return "EC" + strconv.Itoa(lastFlightNr++)
+		return "EC" + strconv.Itoa(lastFlightNr++);
 	}
 	return "BS" + strconv.Itoa(lastFlightNr++)
 }
