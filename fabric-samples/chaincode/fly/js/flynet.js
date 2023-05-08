@@ -30,7 +30,6 @@ class FlyNetChaincode extends Contract {
         return 'Congrats, flight was created successfully';
     }
 
-
     async getAllFlights(ctx) {
         const startKey = '';
         const endKey = ''; // the maximum unicode value
@@ -77,7 +76,7 @@ class FlyNetChaincode extends Contract {
 
         const flight = await this.getFlight(ctx, flightNr);
 
-        if (flight.availablePlaces < number) {
+        if (Number(flight.availablePlaces) < Number(number)) {
             throw new Error('Not enough available places');
         }
 
@@ -99,7 +98,7 @@ class FlyNetChaincode extends Contract {
 
         await ctx.stub.putState(reservationNr, Buffer.from(JSON.stringify(reservation)));
 
-        return 'Reservation created';
+        return 'Reservation created' + reservationNr;
     }
 
     async getReservation(ctx, reservationNr) {
