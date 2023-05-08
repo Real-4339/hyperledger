@@ -66,13 +66,14 @@ async function setupOrg(org: Org, wallet: any) {
 	org.caClient = caClient;
 }
 
+console.warn("Setting up Orgs");
 const wallet1 = await buildWallet(Wallets, walletPath + "1");
 await setupOrg(org1, wallet1);
 const wallet2 = await buildWallet(Wallets, walletPath + "2");
 await setupOrg(org2, wallet2);
 
 
-async function createFlight() {
+async function createFlight_test() {
 	const gateway = new Gateway();
 	const org = org1;
 	await gateway.connect(org.cpp, {
@@ -91,17 +92,13 @@ async function createFlight() {
 	const date = "2021-07-01";
 	const seats = 100;
 
-	console.log("Creating flight");
+	console.warn("Creating flight");
 	const flight = await contract.submitTransaction("createFlight", from, to, date, String(seats));
 	console.log(flight.toString());
-	const flight2 = await contract.submitTransaction("createFlight", from, to, date, String(seats));
-	console.log(flight2.toString());
-	// Get the flight and check if it exists
 	const flightData = await contract.evaluateTransaction("getAllFlights");
-	console.log(flightData.toString());
+	console.dir(JSON.parse(flightData.toString()), { depth: null });
 
-
-	console.log("Creating flights with Office - should fail");
+	console.warn("\n\n\nCreating flights with Office - should fail");
 	await gateway.connect(org2.cpp, {
 		wallet: wallet2,
 		identity: org2.userId,
@@ -111,10 +108,70 @@ async function createFlight() {
 		},
 	});
 
-	const flightOffice = await contract.submitTransaction("createFlight", from, to, date, String(seats));
-	console.log(flightOffice.toString());
+	const flightOffice = await contract.submitTransaction("createFlight", from, to, date, String(seats))
+		.catch(err => console.error(err.responses.map(res => res.response.message)));
+	console.log(flightOffice?.toString());
 
 }
 
+async function bookFlight_test() {
+	const gateway = new Gateway();
+	await gateway.connect(org2.cpp, {
+		wallet: wallet2,
+		identity: org2.userId,
+		discovery: {
+			enabled: true,
+			asLocalhost: true,
+		},
+	});
 
-await createFlight();
+	const network = await gateway.getNetwork(channel);
+	const contract = network.getContract("basic");
+
+	const reserved = await contract.submitTransaction(
+		"reserveSeats",
+		"EC0",
+		"2",
+		JSON.stringify(["John", "Doe"]),
+		JSON.stringify(["JaneEMAIL", "DoeEMAIL"]),
+	);
+	console.log(reserved.toString());
+
+	console.warn("\n\n\nReserving seats too many seats with Office- should fail");
+	const reserved_fail = await contract.submitTransaction(
+		"reserveSeats",
+		"EC0",
+		"200",
+		JSON.stringify(["John", "Doe"]),
+		JSON.stringify(["JaneEMAIL", "DoeEMAIL"]),
+	).catch(err => console.error(err.responses.map(res => res.response.message)));
+	console.log(reserved.toString());
+
+	console.warn("\n\n\nReserving seats with BusyFly - should fail");
+	const gateway_busy = new Gateway();
+	await gateway_busy.connect(org1.cpp, {
+		wallet: wallet1,
+		identity: org1.userId,
+		discovery: {
+			enabled: true,
+			asLocalhost: true,
+		} });
+
+	const network_busy = await gateway_busy.getNetwork(channel);
+	const contract_busy = network_busy.getContract("basic");
+	const reserved_busy = await contract_busy.submitTransaction(
+		"reserveSeats",
+		"EC0",
+		"2",
+		JSON.stringify(["John", "Doe"]),
+		JSON.stringify(["JaneEMAIL", "DoeEMAIL"]),
+	).catch(err => console.error(err.responses.map(res => res.response.message)));
+	const flightData = await contract.evaluateTransaction("getAllFlights");
+	JSON.parse(flightData.toString()).forEach((flight: any) => {
+		console.dir(JSON.stringify(flight));
+	});
+}
+
+
+await createFlight_test();
+await bookFlight_test();
