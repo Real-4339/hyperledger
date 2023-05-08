@@ -5,16 +5,7 @@ fabric-ca-server start -b admin:adminpw --cfg.affiliations.allowremove --cfg.ide
 
 ## How to run:
 
-To start network:
+To start program with network and chaincode:
 ```bash
-./network.sh up
-```
-
-To deploy chaincode -go: (Not working, problem with packet)
-```bash
-./network.sh deployCC -ccn basic -ccp ../chaincode/fly/go/ -ccl go
-```
-To deploy chaincode -js:
-```
-./network.sh deployCC -ccn basic -ccp ../chaincode/fly/js/ -ccl javascript
+/network.sh up createChannel -c mychannel -ca
 ```
