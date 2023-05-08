@@ -30,18 +30,33 @@ class FlyNetChaincode extends Contract {
         return 'Congrats, flight was created successfully';
     }
 
-    async getAllFlights(ctx) {
-        const flightResultsIterator = await ctx.stub.getStateByPartialCompositeKey('Flight', []);
 
-        const flights = [];
-        for await (const queryResponse of flightResultsIterator) {
-            const flight = JSON.parse(queryResponse.value.toString('utf8'));
-            flights.push(flight);
+    async getAllFlights(ctx) {
+        const startKey = '';
+        const endKey = ''; // the maximum unicode value
+
+        const iterator = await ctx.stub.getStateByRange(startKey, endKey);
+        const results = [];
+
+        let res = await iterator.next();
+        while (!res.done) {
+            const item = {
+                key: res.value.key,
+                value: JSON.parse(res.value.value.toString('utf8'))
+            };
+            try {
+                const is = item.value.flightNr;
+                results.push(item);
+            } catch (err) {
+            }
+
+            res = await iterator.next();
         }
 
-        return flights;
-    }
+        await iterator.close();
+        return results;
 
+    }
     async getFlight(ctx, flightNr) {
         const flightAsBytes = await ctx.stub.getState(flightNr);
 
