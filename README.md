@@ -10,7 +10,11 @@ To start network:
 ./network.sh up
 ```
 
-To deployt chaincode:
+To deploy chaincode -go: (Not working, problem with packet)
 ```bash
 ./network.sh deployCC -ccn basic -ccp ../chaincode/fly/go/ -ccl go
+```
+To deploy chaincode -js:
+```
+./network.sh deployCC -ccn basic -ccp ../chaincode/fly/js/ -ccl javascript
 ```
