@@ -44,15 +44,15 @@ Organizations:
         OrdererEndpoints:
             - orderer.example.com:7050
 
-    - &EconFly
+    - &Org1
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: EconFlyMSP
+        Name: Org1MSP
 
         # ID to load the MSP definition as
-        ID: EconFlyMSP
+        ID: Org1MSP
 
-        MSPDir: ../organizations/peerOrganizations/econfly.example.com/msp
+        MSPDir: ../organizations/peerOrganizations/org1.example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -60,26 +60,26 @@ Organizations:
         Policies:
             Readers:
                 Type: Signature
-                Rule: "OR('EconFlyMSP.admin', 'EconFlyMSP.peer', 'EconFlyMSP.client')"
+                Rule: "OR('Org1MSP.admin', 'Org1MSP.peer', 'Org1MSP.client')"
             Writers:
                 Type: Signature
-                Rule: "OR('EconFlyMSP.admin', 'EconFlyMSP.client')"
+                Rule: "OR('Org1MSP.admin', 'Org1MSP.client')"
             Admins:
                 Type: Signature
-                Rule: "OR('EconFlyMSP.admin')"
+                Rule: "OR('Org1MSP.admin')"
             Endorsement:
                 Type: Signature
-                Rule: "OR('EconFlyMSP.peer')"
+                Rule: "OR('Org1MSP.peer')"
 
-    - &BusiFly
+    - &Org2
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: BusiFlyMSP
+        Name: Org2MSP
 
         # ID to load the MSP definition as
-        ID: BusiFlyMSP
+        ID: Org2MSP
 
-        MSPDir: ../organizations/peerOrganizations/busifly.example.com/msp
+        MSPDir: ../organizations/peerOrganizations/org2.example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -87,27 +87,26 @@ Organizations:
         Policies:
             Readers:
                 Type: Signature
-                Rule: "OR('BusiFlyMSP.admin', 'BusiFlyMSP.peer', 'BusiFlyMSP.client')"
+                Rule: "OR('Org2MSP.admin', 'Org2MSP.peer', 'Org2MSP.client')"
             Writers:
                 Type: Signature
-                Rule: "OR('BusiFlyMSP.admin', 'BusiFlyMSP.client')"
+                Rule: "OR('Org2MSP.admin', 'Org2MSP.client')"
             Admins:
                 Type: Signature
-                Rule: "OR('BusiFlyMSP.admin')"
+                Rule: "OR('Org2MSP.admin')"
             Endorsement:
                 Type: Signature
-                Rule: "OR('BusiFlyMSP.peer')"
-
-
-    - &Office
+                Rule: "OR('Org2MSP.peer')"
+    
+    - &Org3
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: OfficeMSP
+        Name: Org3MSP
 
         # ID to load the MSP definition as
-        ID: OfficeMSP
+        ID: Org3MSP
 
-        MSPDir: ../organizations/peerOrganizations/office.example.com/msp
+        MSPDir: ../organizations/peerOrganizations/org3.example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -115,19 +114,16 @@ Organizations:
         Policies:
             Readers:
                 Type: Signature
-                Rule: "OR('OfficeMSP.admin', 'OfficeMSP.peer', 'OfficeMSP.client')"
+                Rule: "OR('Org3MSP.admin', 'Org3MSP.peer', 'Org3MSP.client')"
             Writers:
                 Type: Signature
-                Rule: "OR('OfficeMSP.admin', 'OfficeMSP.client')"
+                Rule: "OR('Org3MSP.admin', 'Org3MSP.client')"
             Admins:
                 Type: Signature
-                Rule: "OR('OfficeMSP.admin')"
+                Rule: "OR('Org3MSP.admin')"
             Endorsement:
                 Type: Signature
-                Rule: "OR('OfficeMSP.peer')"
- 
-
-
+                Rule: "OR('Org3MSP.peer')"
 
 ################################################################################
 #
@@ -233,7 +229,7 @@ Orderer: &OrdererDefaults
 
     # Orderer Type: The orderer implementation to start
     OrdererType: etcdraft
-
+    
     # Addresses used to be the list of orderer addresses that clients and peers
     # could connect to.  However, this does not allow clients to associate orderer
     # addresses and orderer organizations which can be useful for things such
@@ -343,42 +339,31 @@ Profiles:
         Consortiums:
             SampleConsortium:
                 Organizations:
-                    - *EconFly
-                    - *BusiFly
-                    - *Office
+                    - *Org1
+                    - *Org2
+            # SecondConsortium:
+            #     Organizations:
+            #         - *Org1
+            #         - *Org3
 
-    OfficeEconChannel:
+    TwoOrgsChannel:
         Consortium: SampleConsortium
         <<: *ChannelDefaults
         Application:
             <<: *ApplicationDefaults
             Organizations:
-                    - *Office
-                    - *EconFly
+                - *Org1
+                - *Org2
             Capabilities:
                 <<: *ApplicationCapabilities
 
-        Orderer:
-            <<: *OrdererDefaults
-            Organizations:
-                - *OrdererOrg
-            Capabilities:
-                <<: *OrdererCapabilities
-
-    OfficeBusiChannel:
-        Consortium: SampleConsortium
-        <<: *ChannelDefaults
-        Application:
-            <<: *ApplicationDefaults
-            Organizations:
-                    - *Office
-                    - *BusiFly
-            Capabilities:
-                <<: *ApplicationCapabilities
-
-        Orderer:
-            <<: *OrdererDefaults
-            Organizations:
-                - *OrdererOrg
-            Capabilities:
-                <<: *OrdererCapabilities
+    # SecondChannel:
+    #     Consortium: SecondConsortium
+    #     <<: *ChannelDefaults
+    #     Application:
+    #         <<: *ApplicationDefaults
+    #         Organizations:
+    #             - *Org1
+    #             - *Org3
+    #         Capabilities:
+    #             <<: *ApplicationCapabilities
