@@ -120,8 +120,44 @@ class FlyNetChaincode extends Contract {
     }
 
     async checkIn(ctx, reservationNr, passportIDs) {
-        // This function is not implemented in the provided Go code, so it needs to be implemented separately in Node.js.
-        return 'CheckIn';
+        const callerOrg = ctx.clientIdentity.getMSPID();
+
+        if (callerOrg !== 'Org2MSP') {
+            throw new Error('The caller is not authorized to invoke the CheckIn function');
+        }
+
+        const reservation = await this.getReservation(ctx, reservationNr);
+        const flight = await this.getFlight(ctx, reservation.FlightNr);
+
+        // Check if passport IDs match the customerNames in the reservation
+        if (passportIDs.length !== reservation.CustomerNames.length) {
+            throw new Error('The number of passport IDs does not match the number of customers');
+        }
+
+        reservation.CustomerNames.forEach((customerName, index) => {
+            if (customerName !== passportIDs[index]) {
+                throw new Error('The passport IDs do not match the customer names');
+            }
+        });
+
+        //Chage status to checked-in
+        reservation.Status = 'CheckedIn';
+
+        await ctx.stub.putState(reservationNr, Buffer.from(JSON.stringify(reservation)));
+
+        // Json object of tickets
+        const tickets = {
+            ReservationNr: reservationNr,
+            CustomerNames: reservation.CustomerNames,
+            CustomerEmail: reservation.CustomerEmail,
+            FlightNr: reservation.FlightNr,
+            FlyFrom: flight.FlyFrom,
+            FlyTo: flight.FlyTo,
+            dateTime: flight.dateTime,
+            NrOfSeats: reservation.NrOfSeats
+        };
+
+        return tickets;
     }
 
     generateFlightNr(org) {
