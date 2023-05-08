@@ -515,11 +515,11 @@ if [ "${MODE}" == "up" ]; then
 
   networkUp
 
-  createChannel
+  # createChannel
 
-  cd ./addOrg3
+  # cd ./addOrg3
 
-  ./addOrg3.sh up -c mychannel
+  # ./addOrg3.sh up -c mychannel
 
   # cd ./addOrg3
 
@@ -531,6 +531,10 @@ if [ "${MODE}" == "up" ]; then
 
 elif [ "${MODE}" == "createChannel" ]; then
   createChannel
+  cd ./addOrg3
+  ./addOrg3.sh up -c mychannel 
+  cd ..
+  ./network.sh deployCC -ccn basic -ccp ../chaincode/fly/js -ccl javascript
 elif [ "${MODE}" == "createSecond" ]; then
 
   # configtxgen -profile SecondOrdererGenesis -channelID system-channel2 -outputBlock ./system-genesis-block/secondgenesis.block
