@@ -112,6 +112,10 @@ async function createFlight_test() {
 		.catch(err => console.error(err.responses.map(res => res.response.message)));
 	console.log(flightOffice?.toString());
 
+	console.warn("Get non existing flight - should fail");
+	const flight2 = await contract.evaluateTransaction("getFlight", "EC110").
+		catch(err => console.error(err.responses?.map(res => res.response.message)));
+
 }
 
 async function bookFlight_test() {
@@ -170,6 +174,11 @@ async function bookFlight_test() {
 	JSON.parse(flightData.toString()).forEach((flight: any) => {
 		console.dir(JSON.stringify(flight));
 	});
+
+	console.warn("\n\n\nGet reservation - R0");
+	const reservations = await contract.submitTransaction("getReservation", "R0");
+	console.log(prettyJSONString(reservations.toString()));
+
 }
 
 
